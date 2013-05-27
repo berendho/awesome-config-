@@ -6,7 +6,6 @@ require("awful.rules")
 require("beautiful")
 -- Notification library
 require("naughty")
-
 -- Load Debian menu entries
 require("debian.menu")
 
@@ -251,7 +250,7 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey,           }, "Return", function () awful.util.spawn(terminal) end),
     awful.key({ modkey, "Control" }, "r", awesome.restart),
     awful.key({ modkey, "Shift"   }, "q", awesome.quit),
-
+    awful.key({ modkey,           }, "F12",   function () awful.util.spawn("xlock")     end),
     awful.key({ modkey,           }, "l",     function () awful.tag.incmwfact( 0.05)    end),
     awful.key({ modkey,           }, "h",     function () awful.tag.incmwfact(-0.05)    end),
     awful.key({ modkey, "Shift"   }, "h",     function () awful.tag.incnmaster( 1)      end),
@@ -264,6 +263,14 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Control" }, "n", awful.client.restore),
     awful.key({ modkey,           }, "p",     function () awful.util.spawn("synapse") end),
     awful.key({ modkey,           }, "c",     function () awful.util.spawn("chromium-browser") end),
+
+   -- volume up/down
+   awful.key({ }, "XF86AudioLowerVolume", function () awful.util.spawn("amixer -q sset Master 2dB-") end),
+   awful.key({ }, "XF86AudioRaiseVolume", function () awful.util.spawn("amixer -q sset Master 2dB+") end),
+   -- mute unmute button
+   awful.key({ }, "XF86AudioMute", function () 
+                awful.util.spawn("amixer -q sset Master toggle")
+                awful.util.spawn("amixer -q sset PCM unmute") end),
 
     -- Prompt
     awful.key({ modkey },            "r",     function () mypromptbox[mouse.screen]:run() end),
@@ -298,6 +305,9 @@ clientkeys = awful.util.table.join(
             c.maximized_vertical   = not c.maximized_vertical
         end)
 )
+
+
+
 
 -- Compute the maximum number of digit we need, limited to 9
 keynumber = 0
@@ -362,8 +372,15 @@ awful.rules.rules = {
       properties = { floating = true } },
     { rule = { class = "gimp" },
       properties = { floating = true } },
+    -- prevent chromium from opening as a floating window
     { rule = { class = "Chromium-browser" },
       properties = { floating = false } },
+    --tag spotify on window 2 tag 2 (does not work)
+    { rule = { class = "spotify" },
+      properties = { floating = false , tag = tags[2][2] } },
+    -- prevent full screen flash windows from being tiled
+    { rule = { instance = "plugin-container" },
+        properties = { floating = true } },
     -- Set Firefox to always map on tags number 2 of screen 1.
     -- { rule = { class = "Firefox" },
     --   properties = { tag = tags[1][2] } },
