@@ -73,7 +73,7 @@ layouts =
 tags = {}
 for s = 1, screen.count() do
     -- Each screen has its own tag table.
-    tags[s] = awful.tag({ 1, 2, 3, 4, 5, 6, 7, 8, 9 }, s, layouts[1])
+    tags[s] = awful.tag({ 1, 2, 3, 4, 5, 6, 7, 8, 9 }, s, layouts[2])
 end
 -- }}}
 
@@ -271,6 +271,16 @@ globalkeys = awful.util.table.join(
    awful.key({ }, "XF86AudioMute", function () 
                 awful.util.spawn("amixer -q sset Master toggle")
                 awful.util.spawn("amixer -q sset PCM unmute") end),
+  -- Start spotify with media button
+  awful.key({ }, "XF86Tools", function () awful.util.spawn("spotify") end),
+  -- Start chromium with www button
+  awful.key({ }, "XF86HomePage", function () awful.util.spawn("chromium-browser") end),
+  -- Play pause spotify with play pause button
+  awful.key({ }, "XF86AudioPlay", function () 
+    awful.util.spawn_with_shell("dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause 1> /dev/null")
+     end),
+  
+
 
     -- Prompt
     awful.key({ modkey },            "r",     function () mypromptbox[mouse.screen]:run() end),
