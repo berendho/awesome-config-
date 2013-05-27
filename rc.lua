@@ -43,6 +43,12 @@ terminal = "x-terminal-emulator"
 editor = os.getenv("EDITOR") or "editor"
 editor_cmd = terminal .. " -e " .. editor
 
+-- adapted from http://ubuntuforums.org/showthread.php?t=1797848
+-- possible options for s:Play Pause PlayPause Next Previous Stop
+function spotify_cmd( s )
+  awful.util.spawn_with_shell("dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player." .. s .. " 1> /dev/null")
+end
+
 -- Default modkey.
 -- Usually, Mod4 is the key with a logo between Control and Alt.
 -- If you do not like this or do not have such a key,
@@ -276,11 +282,11 @@ globalkeys = awful.util.table.join(
   -- Start chromium with www button
   awful.key({ }, "XF86HomePage", function () awful.util.spawn("chromium-browser") end),
   -- Play pause spotify with play pause button
-  awful.key({ }, "XF86AudioPlay", function () 
-    awful.util.spawn_with_shell("dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause 1> /dev/null")
-     end),
-  
-
+  awful.key({ }, "XF86AudioPlay", function () spotify_cmd("PlayPause") end),
+  -- Next, Previous Song on spotify
+  awful.key({modkey,"Control" }, "Right", function () spotify_cmd("Next") end),
+  awful.key({modkey,"Control" }, "Left", function () spotify_cmd("Previous") end),
+ 
 
     -- Prompt
     awful.key({ modkey },            "r",     function () mypromptbox[mouse.screen]:run() end),
