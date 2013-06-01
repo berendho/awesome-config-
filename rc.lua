@@ -8,6 +8,10 @@ require("beautiful")
 require("naughty")
 -- Load Debian menu entries
 require("debian.menu")
+-- shifty - dynamic tagging library
+require("shifty")
+-- vicious for widgets http://awesome.naquadah.org/wiki/Vicious#Getting_Vicious
+vicious = require("vicious")
 
 -- {{{ Error handling
 -- Check if awesome encountered an error during startup and fell back to
@@ -37,6 +41,7 @@ end
 -- {{{ Variable definitions
 -- Themes define colours, icons, and wallpapers
 beautiful.init("/usr/share/awesome/themes/default/theme.lua")
+-- beautiful.init("/usr/share/awesome/themes/default/theme_adapted.lua")
 
 -- This is used later as the default terminal and editor to run.
 terminal = "x-terminal-emulator"
@@ -74,14 +79,138 @@ layouts =
 }
 -- }}}
 
--- {{{ Tags
--- Define a tag table which hold all screen tags.
-tags = {}
-for s = 1, screen.count() do
-    -- Each screen has its own tag table.
-    tags[s] = awful.tag({ 1, 2, 3, 4, 5, 6, 7, 8, 9 }, s, layouts[2])
-end
--- }}}
+-- Shifty configured tags.
+shifty.config.tags = {
+    main = {
+        layout    = awful.layout.suit.tile,
+        mwfact    = 0.50,
+        exclusive = false,
+        position  = 1,
+        init      = true,
+        screen    = {1,2},
+        slave     = true,
+    },
+    web = {
+        layout      = awful.layout.suit.tile,
+        init        = true,
+        nopopup     = true,
+        mwfact      = 0.65,
+        position    = 2,
+        -- spawn       = browser,
+    },
+    files = {
+        layout    = awful.layout.suit.left,
+        init      = true,
+        nopopup   = true,
+        mwfact    = 1,
+        exclusive = false,
+        position  = 5,
+        spawn     = dolphin,
+    },
+    chat = {
+        layout = awful.layout.suit.tile.left,
+        init = false,
+        mwfact = 0.5,
+        nopopup = false,
+        exclusive = false,
+        position = 9,
+    },
+    tex = {
+        layout = awful.layout.suit.tile.left,
+        exclusive = false,
+        init = false,
+        position = 6,
+    },
+    media = {
+        layout    = awful.layout.suit.max,
+        exclusive = false,
+        position  = 8,
+    },
+    office = {
+        layout   = awful.layout.suit.tile,
+        position = 7,
+    },
+}
+
+-- SHIFTY: application matching rules
+-- order here matters, early rules will be applied first
+shifty.config.apps = {
+    {
+        match = {
+            "Chromium-browser",
+            "chromium-browser",
+        },
+        nofocus = false,
+    },
+    {
+        match = { 
+             "hangouts",
+             "Hangouts",
+        },
+        tag = "chat",
+    },
+    {
+        match = {
+            "synapse",
+        },
+        intrusive = true,
+        float = true,
+    },
+    {
+        match = {
+            "pcmanfm",
+        },
+        slave = true
+    },
+    {
+        match = {
+            "OpenOffice.*",
+        },
+        tag = "office",
+    },
+    {
+        match = {
+            "vlc",
+            "spotify",
+        },
+        tag = "media",
+        nopopup = true,
+    },
+    {
+        match = {
+            "MPlayer",
+            "Gnuplot",
+            "galculator",
+        },
+        float = true,
+    },
+    {
+        match = {
+            terminal,
+        },
+        honorsizehints = false,
+        slave = true,
+    },
+}
+
+-- SHIFTY: default tag creation rules
+-- parameter description
+--  * floatBars : if floating clients should always have a titlebar
+--  * guess_name : should shifty try and guess tag names when creating
+--                 new (unconfigured) tags?
+--  * guess_position: as above, but for position parameter
+--  * run : function to exec when shifty creates a new tag
+--  * all other parameters (e.g. layout, mwfact) follow awesome's tag API
+shifty.config.defaults = {
+    layout = awful.layout.suit.tile.left,
+    ncol = 1,
+    mwfact = 0.50,
+    floatBars = true,
+    guess_name = true,
+    guess_position = true,
+}
+
+
 
 -- {{{ Menu
 -- Create a laucher widget and a main menu
@@ -102,9 +231,38 @@ mylauncher = awful.widget.launcher({ image = image(beautiful.awesome_icon),
                                      menu = mymainmenu })
 -- }}}
 
+
+-- Initialize widget
+memwidget = widget({ type = "textbox" })
+-- Register widget
+vicious.register(memwidget, vicious.widgets.mem, "mem: $1%", 10)
+
+seperator = widget({type = "textbox"})
+seperator.text = " <span color='#767b8a'>::</span> "
+
+-- tag seperator
+tagseperator = widget({type = "textbox"})
+tagseperator.text = " <span color='#767b8a'>|</span> "
+
+-- Initialize widget
+datewidget = widget({ type = "textbox" })
+-- Register widget
+vicious.register(datewidget, vicious.widgets.date, "%b %d, %R", 60)
 -- {{{ Wibox
 -- Create a textclock widget
-mytextclock = awful.widget.textclock({ align = "right" })
+-- mytextclock = awful.widget.textclock({ align = "right" })
+
+-- cpu
+cpuwidget = widget({ type = "textbox" })
+vicious.register(cpuwidget, vicious.widgets.cpu, "$1%")
+
+-- network
+netwidget = widget({type = "textbox"})
+-- netwidget.width = 50
+vicious.register(netwidget, vicious.widgets.net, "<span color='#3ab3ff'>↓ </span>${wlan1 down_kb}")
+netwidgetup = widget({type = "textbox"})
+-- netwidgetup.width = 50
+vicious.register(netwidgetup, vicious.widgets.net, "<span color='#3ab3ff'>↑ </span>${wlan1 up_kb}")
 
 -- Create a systray
 mysystray = widget({ type = "systray" })
@@ -113,7 +271,7 @@ mysystray = widget({ type = "systray" })
     kbdcfg = {}
     kbdcfg.cmd = "setxkbmap"
     kbdcfg.layout = { "us", "dvorak" }
-    kbdcfg.current = 2  -- us is our default layout
+    kbdcfg.current = 2  -- dvorak is the default layout
     kbdcfg.widget = widget({ type = "textbox", align = "left" })
     kbdcfg.widget.text = " " .. kbdcfg.layout[kbdcfg.current] .. " "
     kbdcfg.switch = function ()
@@ -203,8 +361,17 @@ for s = 1, screen.count() do
             layout = awful.widget.layout.horizontal.leftright
         },
         mylayoutbox[s],
-        mytextclock,
+        datewidget,
+        tagseperator,
         kbdcfg.widget,
+        seperator,
+        memwidget,
+        seperator,
+        cpuwidget,
+        seperator,
+        netwidget,
+        tagseperator,
+        netwidgetup,
         s == 1 and mysystray or nil,
         mytasklist[s],
         layout = awful.widget.layout.horizontal.rightleft
@@ -287,6 +454,8 @@ globalkeys = awful.util.table.join(
   awful.key({modkey,"Control" }, "Right", function () spotify_cmd("Next") end),
   awful.key({modkey,"Control" }, "Left", function () spotify_cmd("Previous") end),
  
+  --Shutdown the computer when the power button is pressed
+  awful.key({ }, "XF86PowerOff", function () awful.util.spawn(terminal .. " -e gksu poweroff") end),
 
     -- Prompt
     awful.key({ modkey },            "r",     function () mypromptbox[mouse.screen]:run() end),
@@ -326,43 +495,43 @@ clientkeys = awful.util.table.join(
 
 
 -- Compute the maximum number of digit we need, limited to 9
-keynumber = 0
-for s = 1, screen.count() do
-   keynumber = math.min(9, math.max(#tags[s], keynumber));
-end
+-- keynumber = 0
+-- for s = 1, screen.count() do
+--    keynumber = math.min(9, math.max(#tags[s], keynumber));
+-- end
+-- SHIFTY: initialize shifty
+    -- the assignment of shifty.taglist must always be after its actually
+-- initialized with awful.widget.taglist.new()
+    shifty.taglist = mytaglist
+shifty.init()
+    shifty.config.clientkeys = clientkeys
+    shifty.config.modkey = modkey
 
--- Bind all key numbers to tags.
--- Be careful: we use keycodes to make it works on any keyboard layout.
--- This should map on the top row of your keyboard, usually 1 to 9.
-for i = 1, keynumber do
-    globalkeys = awful.util.table.join(globalkeys,
-        awful.key({ modkey }, "#" .. i + 9,
-                  function ()
-                        local screen = mouse.screen
-                        if tags[screen][i] then
-                            awful.tag.viewonly(tags[screen][i])
-                        end
-                  end),
-        awful.key({ modkey, "Control" }, "#" .. i + 9,
-                  function ()
-                      local screen = mouse.screen
-                      if tags[screen][i] then
-                          awful.tag.viewtoggle(tags[screen][i])
-                      end
-                  end),
-        awful.key({ modkey, "Shift" }, "#" .. i + 9,
-                  function ()
-                      if client.focus and tags[client.focus.screen][i] then
-                          awful.client.movetotag(tags[client.focus.screen][i])
-                      end
-                  end),
-        awful.key({ modkey, "Control", "Shift" }, "#" .. i + 9,
-                  function ()
-                      if client.focus and tags[client.focus.screen][i] then
-                          awful.client.toggletag(tags[client.focus.screen][i])
-                      end
-                  end))
-end
+
+for i = 1, 9 do
+globalkeys = awful.util.table.join(globalkeys,
+        awful.key({modkey}, i, function()
+            local t =  awful.tag.viewonly(shifty.getpos(i))
+            end),
+        awful.key({modkey, "Control"}, i, function()
+            local t = shifty.getpos(i)
+            t.selected = not t.selected
+            end),
+        awful.key({modkey, "Control", "Shift"}, i, function()
+            if client.focus then
+            awful.client.toggletag(shifty.getpos(i))
+            end
+            end),
+        -- move clients to other tags
+        awful.key({modkey, "Shift"}, i, function()
+            if client.focus then
+            t = shifty.getpos(i)
+            awful.client.movetotag(t)
+            awful.tag.viewonly(t)
+            end
+            end))
+    end
+
 
 clientbuttons = awful.util.table.join(
     awful.button({ }, 1, function (c) client.focus = c; c:raise() end),
@@ -391,9 +560,8 @@ awful.rules.rules = {
     -- prevent chromium from opening as a floating window
     { rule = { class = "Chromium-browser" },
       properties = { floating = false } },
-    --tag spotify on window 2 tag 2 (does not work)
-    { rule = { class = "spotify" },
-      properties = { floating = false , tag = tags[2][2] } },
+    {rule = {class = "sublime-text-2"},
+    properties = {floating = false } },  
     -- prevent full screen flash windows from being tiled
     { rule = { instance = "plugin-container" },
         properties = { floating = true } },
