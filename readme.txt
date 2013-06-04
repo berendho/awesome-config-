@@ -1,1 +1,1 @@
-This config is ment to be used for awesome wm and requires:
+This config is meant to be used with [awesome wm](http://awesome.naquadah.org/).
