@@ -305,7 +305,7 @@ mysystray = widget({ type = "systray" })
 
 
 spot= widget({type = "textbox"})
-vicious.register(spot,vicious.contrib.spotify,"<span color='#3ab3ff'> $1 </span>",1)
+vicious.register(spot,vicious.contrib.spotify,"<span color='#3ab3ff'> $artist - $title  </span>",1)
 
 -- File systems
 -- local fs = { "/",

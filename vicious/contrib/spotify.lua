@@ -14,31 +14,54 @@ local helpers = require("vicious.helpers")
 
 -- spotify: provides metadata about the currently playing song in spotify
 -- vicious.contrib.spotify
-local spotify = {}
+local metadata = {}
 
 
 -- {{{ spotify widget type
 local function worker(format, warg)
     
+    local types = {}
+    local metadata = {}
+    
 
-    -- Get data from spotify
-    handletitle = io.popen('dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify / org.freedesktop.MediaPlayer2.GetMetadata | awk -F\"\\\"\" \'/xesam:title/{getline; print $2}\'')
-    title = handletitle:read("*line")
-    handleartist = io.popen('dbus-send --print-reply --dest=org.mpris.MediaPlayer2.spotify / org.freedesktop.MediaPlayer2.GetMetadata | awk -F\"\\\"\" \'/xesam:artist/{getline;getline; print $2}\'')
-    artist = handleartist:read("*line")
-    handletitle:close()
-    handleartist:close()
+    -- Get data from spotify via dbus
+    handle = io.popen('qdbus org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Metadata | awk -F: \'{$1=\"\";$2=\"\";print substr($0,4)}\'') 
+    handletypes = io.popen('qdbus org.mpris.MediaPlayer2.spotify /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Metadata | awk -F: \'{print $2}\'') 
 
-    -- Not installed,
-    if title == nil
-    then
-        return {"Stopped"}
+    
+
+    -- as of spotify for linux version 0.9.0.133 the following metadata types are provided 
+    -- artUrl;length;trackid;album;artist;autoRating;contentCreated;discNumber;title;trackNumber;url
+
+    --store all handletypes
+    for line in handletypes:lines() do
+        table.insert(types, line)
+    end
+    
+    --add data to corresponding handletype in array
+    local i = 1
+    for line in handle:lines() do
+        metadata[types[i]] = helpers.escape(line)
+        i = i +1
     end
 
-    spotify_currently_playing = (artist .. " - " .. title) 
-    print(spotify_currently_playing)
-    return {helpers.escape(spotify_currently_playing)}
+    -- catch spotify not running
+    if i < 3 -- only 1 run so spotify must not be available
+        then
+         return("spotify is not running")
+     end
+
+    handle:close()
+    handletypes:close()
+
+    -- No title available return stopped
+    if metadata.title == nil
+    then
+        return {"Something went wrong"}
+    end
+
+    return metadata
 end
 -- }}}
 
-return setmetatable(spotify, { __call = function(_, ...) return worker(...) end })
+return setmetatable(metadata, { __call = function(_, ...) return worker(...) end })
