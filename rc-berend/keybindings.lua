@@ -1,3 +1,17 @@
+    
+    previous_layout_berend = layouts[2] --default is tile
+    function fullscreen_switch() -- I know this does not strictly work for all situations, but i don't want to improve it so it is screen and tag independend
+        -- if not fullscreen, go fullscreen; if fullscreen, go to previous state or suit.tile
+        local current_layout = awful.layout.get()
+        if current_layout==awful.layout.suit.max
+            then awful.layout.set(previous_layout_berend)
+        else 
+            previous_layout_berend = current_layout
+            awful.layout.set(layouts[10]) --suit.max
+        end
+     end
+
+
 -- {{{ Mouse bindings
 root.buttons(awful.util.table.join(
     awful.button({ }, 3, function () mymainmenu:toggle() end),
@@ -38,6 +52,7 @@ globalkeys = awful.util.table.join(
             end
         end),
 
+
     -- Standard program
     awful.key({ modkey,           }, "Return", function () awful.util.spawn(terminal) end),
     awful.key({ modkey, "Control" }, "r", awesome.restart),
@@ -49,14 +64,19 @@ globalkeys = awful.util.table.join(
     awful.key({ modkey, "Shift"   }, "l",     function () awful.tag.incnmaster(-1)      end),
     awful.key({ modkey, "Control" }, "h",     function () awful.tag.incncol( 1)         end),
     awful.key({ modkey, "Control" }, "l",     function () awful.tag.incncol(-1)         end),
-    awful.key({ modkey,           }, "space", function () awful.layout.inc(layouts,  1) end),
+    awful.key({ modkey, "Control","Shift"}, "space", function () awful.layout.inc(layouts,  1) end),
     awful.key({ modkey, "Shift"   }, "space", function () awful.layout.inc(layouts, -1) end),
+    awful.key({ modkey,           }, "space", function () fullscreen_switch() end),
+
 
     awful.key({ modkey, "Control" }, "n", awful.client.restore),
     awful.key({ modkey,           }, "p",     function () awful.util.spawn("synapse") end),
     awful.key({ modkey,           }, "c",     function () awful.util.spawn("chromium-browser") end),
 
-   -- X86 KEYBINDINGS
+
+    awful.key({modkey, "Shift",},"z", function() awful.util.spawn_with_shell("awsetbg -r /home/berend/Pictures/wallpapers-awesome/wallpapers") end),
+
+   -- X86 KEYBINDINGSZ
    
    -- AUDIO
         -- volume up/down
@@ -89,6 +109,8 @@ globalkeys = awful.util.table.join(
         awful.key({modkey, }, "f", function () awful.util.spawn("dolphin") end),
         awful.key({ }, "XF86Launch9", function () awful.util.spawn("subl") end),
         awful.key({modkey, }, "e", function () awful.util.spawn("subl") end),
+        awful.key({ }, "Print", function () awful.util.spawn("gnome-screenshot -i") end),
+
     -- Prompt
     awful.key({ modkey },            "r",     function () mypromptbox[mouse.screen]:run() end),
 

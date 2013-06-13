@@ -13,6 +13,8 @@ require("shifty")
 -- vicious for widgets http://awesome.naquadah.org/wiki/Vicious#Getting_Vicious
 vicious = require("vicious")
 
+os.execute("test -d " .. awful.util.getdir("cache") .. " || mkdir -p " .. awful.util.getdir("cache"))
+os.execute("XDG_CACHE_HOME=" .. awful.util.getdir("cache"))
 
 -- Simple function to load additional LUA files from rc/.
 function loadrc(name, mod)
@@ -186,10 +188,11 @@ shifty.config.apps = {
     },
     {
         match = {
-            "vlc",
             "Spotify",
         },
         tag = "media",
+        --screen = math.max(screen.count(), 2),
+        screen = 1,
         nopopup = true,
         urgent = false,
         nofocus = false,
@@ -260,12 +263,14 @@ vicious.register(cpuwidget, vicious.widgets.cpu, "CPU: $1%")
 
 
 -- network
-netwidget = widget({type = "textbox"})
--- netwidget.width = 50
-vicious.register(netwidget, vicious.widgets.net, "<span color='#3ab3ff'>↓ </span>${wlan1 down_kb}")
-netwidgetup = widget({type = "textbox"})
--- netwidgetup.width = 50
-vicious.register(netwidgetup, vicious.widgets.net, "<span color='#3ab3ff'>↑ </span>${wlan1 up_kb}")
+wlan1widget = widget({type = "textbox"})
+vicious.register(wlan1widget, vicious.widgets.net, "${wlan1 up_kb} kb/s / ${wlan1 down_kb} kb/s")
+
+netimgup = widget({ type = "imagebox" })
+netimgup.image = image("/home/berend/.config/awesome/icons/widgets/up.png")
+
+netimgdown = widget({ type = "imagebox" })
+netimgdown.image = image("/home/berend/.config/awesome/icons/widgets/down.png")
 
 -- Create a systray
 mysystray = widget({ type = "systray" })
@@ -289,23 +294,13 @@ mysystray = widget({ type = "systray" })
         awful.button({ }, 1, function () kbdcfg.switch() end)
     ))
 
--- change monitor layout
--- monlayoutleft=widget({type = "textbox" })
--- monlayoutleft.text = "LEFT"
--- monlayoutleft:buttons(awful.util.table.join(
---   awful.button({ }, 1, function () awful.util.spawn("xrandr --auto --output VGA-0 --left-of LVDS-0") end)
---   ))
 
+-- Spotify widget
+spotwidget= widget({type = "textbox"})
+vicious.register(spotwidget,vicious.contrib.spotify,"$artist - $title",1)
 
--- monlayoutright=widget({type = "textbox"})
--- monlayoutright.text = "RIGHT"
--- monlayoutright:buttons(awful.util.table.join(
---   awful.button({ }, 1, function () awful.util.spawn("xrandr --auto --output VGA-0 --right-of LVDS-0") end)
---   ))
-
-
-spot= widget({type = "textbox"})
-vicious.register(spot,vicious.contrib.spotify,"<span color='#3ab3ff'> $artist - $title  </span>",1)
+musicimg = widget({ type = "imagebox" })
+musicimg.image = image("/home/berend/.config/awesome/icons/widgets/music.png")
 
 -- File systems
 -- local fs = { "/",
@@ -432,11 +427,12 @@ mybottomwibox[1].widgets =
                       seperator,
                       memwidget,
                       seperator,
-                      netwidget,
-                      tagseperator,
-                      netwidgetup,
+                      netimgdown,
+                      wlan1widget,
+                      netimgup,
                       seperator,
-                      spot,
+                      spotwidget,
+                      musicimg,
                       layout = awful.widget.layout.horizontal.rightleft}
 -- }}}
 
@@ -500,3 +496,4 @@ client.add_signal("unfocus", function(c) c.border_color = beautiful.border_norma
 -- awful.util.spawn("nm-applet")
 --awful.util.spawn("gtk-redshift","gtk-redshift -l 52.0:4.36")
 -- xrun("NetworkManager Applet", "nm-applet")
+awful.util.spawn_with_shell("awsetbg -r /home/berend/Pictures/wallpapers-awesome/wallpapers")
